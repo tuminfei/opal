@@ -1,6 +1,6 @@
 require 'opal'
 require 'user'
-require 'opal/platform'
+# require 'opal/platform'
 
 module MyApp
   class Application
@@ -14,6 +14,7 @@ module MyApp
   end
 end
 
+raise "Asdf"
 $app = MyApp::Application.new
 
 require 'native'

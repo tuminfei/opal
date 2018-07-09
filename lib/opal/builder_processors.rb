@@ -2,12 +2,12 @@
 
 require 'opal/compiler'
 require 'opal/erb'
-require 'source_map'
 
 module Opal
   module BuilderProcessors
     class Processor
       def initialize(source, filename, options = {})
+        source += "\n" unless source.end_with?("\n")
         @source, @filename, @options = source, filename, options
         @requires = []
         @required_trees = []
@@ -40,23 +40,10 @@ module Opal
         end
       end
 
+      ManualFragment = Struct.new(:line, :column, :code, :source_map_name)
+
       def source_map
-        @source_map ||= begin
-          mappings = []
-          source_file = "#{filename}.js"
-          line = source.count("\n")
-          column = source.scan("\n[^\n]*$").size
-          offset = ::SourceMap::Offset.new(line, column)
-          mappings << ::SourceMap::Mapping.new(source_file, offset, offset)
-
-          # Ensure mappings isn't empty: https://github.com/maccman/sourcemap/issues/11
-          unless mappings.any?
-            zero_offset = ::SourceMap::Offset.new(0, 0)
-            mappings = [::SourceMap::Mapping.new(source_file, zero_offset, zero_offset)]
-          end
-
-          ::SourceMap::Map.new(mappings)
-        end
+        @source_map ||= ::Opal::SourceMap::File.new([ManualFragment.new(1, 0, source, nil)], filename, source)
       end
 
       def mark_as_required(filename)
@@ -80,7 +67,7 @@ module Opal
       end
 
       def source_map
-        compiled.source_map.map
+        compiled.source_map
       end
 
       def compiled

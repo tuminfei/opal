@@ -25,13 +25,39 @@ module Opal
 
     # Inspect the contents of this fragment, f("fooo")
     def inspect
-      "f(#{@code.inspect})"
+      # "f(#{@code.inspect}, line: #{line}, column: #{column})"
+      # p [column, line && line-1, code, source_map_name]
+      # [:f, (line && line-1), column, code, source_map_name].inspect
+      "OpenStruct.new(line: #{line.inspect}, column: #{column.inspect}, source_map_name: #{source_map_name.inspect}, code: #{code.inspect}, sexp_type: #{@sexp.type.inspect}),"
+    end
+
+    def to_s
+      inspect
     end
 
     def source_map_name
-      return nil unless @scope
-      def_node = @scope.def? ? @scope : @scope.find_parent_def
-      def_node && def_node.mid
+      case @sexp.type
+      when :top, :begin, :newline, :js_return
+        nil
+      when :self
+        'self'
+      when :module
+        'module'
+      when :class
+        'class'
+      when :int
+        @sexp.children.first
+      when :def
+        @sexp.children.first
+      when :defs
+        @sexp.children[1]
+      when :send
+        @sexp.children[1]
+      when :lvar, :lvasgn, :lvdeclare, :ivar, :ivasgn, :gvar, :cvar, :cvasgn, :gvars, :gvasgn
+        @sexp.children.first
+      else
+        nil
+      end
     end
 
     # Original line this fragment was created from
